@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scary Meter</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: darkred;
+        }
+        button:disabled {
+            background-color: #888;
+            cursor: not-allowed;
+        }
+        #countdown {
+            font-size: 100px;
+            font-weight: bold;
+            margin: 20px 0;
+            display: none;
+        }
+        #scoreDisplay {
+            font-size: 40px;
+            margin: 20px 0;
+            display: none;
+        }
+        #scoreValue {
+            font-weight: bold;
+            color: #c00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scary Meter</h1>
+    <button id="startButton" onclick="startCountdown()">Check Scary-ness</button>
+    <div id="countdown">5</div>
+    <div id="scoreDisplay">Scary Score: <span id="scoreValue">0</span></div>
+    
+    <script>
+        let statusInterval = null;
+        
+        function startCountdown() {
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('countdown').style.display = 'block';
+            document.getElementById('scoreDisplay').style.display = 'none';
+            
+            fetch('/start_countdown', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "started" || data.status === "already_running") {
+                        statusInterval = setInterval(checkStatus, 500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('startButton').disabled = false;
+                });
+        }
+        
+        function checkStatus() {
+            fetch('/get_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.countdown_active) {
+                        document.getElementById('countdown').innerText = data.current_countdown;
+                    } else {
+                        clearInterval(statusInterval);
+                        document.getElementById('countdown').style.display = 'none';
+                        document.getElementById('startButton').disabled = false;
+                        
+                        if (data.latest_scary_score >= 0) {
+                            document.getElementById('scoreValue').innerText = data.latest_scary_score;
+                            document.getElementById('scoreDisplay').style.display = 'block';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    clearInterval(statusInterval);
+                    document.getElementById('startButton').disabled = false;
+                });
+        }
+    </script>
+</body>
+</html>

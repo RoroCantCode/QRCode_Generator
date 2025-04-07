@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporary Image Server</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Using your existing CSS with additions for QR codes */
+        :root {
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --secondary-color: #2ecc71;
+            --secondary-dark: #27ae60;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --text-light: #888888;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+        }
+
+        .card h2 i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            background-color: rgba(52, 152, 219, 0.05);
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .upload-zone:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .upload-button i {
+            margin-right: 8px;
+        }
+
+        .upload-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .share-container {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .share-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .share-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .copy-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .copy-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .gallery-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .refresh-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .refresh-button i {
+            margin-right: 8px;
+        }
+
+        .refresh-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .image-card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .image-container {
+            height: 200px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7f9fc;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-info {
+            padding: 15px;
+        }
+
+        .image-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-expiry {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .image-expiry i {
+            margin-right: 5px;
+            color: var(--primary-color);
+        }
+
+        .image-actions {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .download-button, .copy-link-button, .view-button {
+            flex: 1 0 calc(50% - 8px);
+            padding: 8px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 110px;
+        }
+
+        .download-button {
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+        }
+
+        .download-button:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .copy-link-button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .copy-link-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .view-button {
+            background-color: #9b59b6;
+            color: white;
+            text-decoration: none;
+        }
+
+        .view-button:hover {
+            background-color: #8e44ad;
+        }
+
+        .download-button i, .copy-link-button i, .view-button i {
+            margin-right: 5px;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+        }
+
+        .status i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .status.info {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+        }
+
+        .status.success {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .status.error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 40px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        /* QR code section styles */
+        .qr-code-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .qr-code-container img {
+            max-width: 150px;
+            max-height: 150px;
+            border: 1px solid #e1e1e1;
+            padding: 10px;
+            background-color: white;
+        }
+
+        .qr-instructions {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        /* Upload progress bar */
+        .upload-progress {
+            height: 6px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .share-container {
+                flex-direction: column;
+            }
+            
+            .share-input {
+                border-radius: var(--border-radius) var(--border-radius) 0 0;
+            }
+            
+            .copy-button {
+                border-radius: 0 0 var(--border-radius) var(--border-radius);
+                padding: 10px;
+            }
+
+            .gallery-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .refresh-button {
+                margin-top: 10px;
+            }
+            
+            .image-actions {
+                flex-direction: column;
+            }
+            
+            .download-button, .copy-link-button, .view-button {
+                flex: 1;
+                margin: 4px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-images"></i> Temporary Image Server</h1>
+        <p>Upload, share, and download images. All images are automatically deleted after 30 minutes.</p>
+    </header>
+
+    <section class="card">
+        <h2><i class="fas fa-upload"></i> Upload Image</h2>
+        <form id="upload-form" enctype="multipart/form-data">
+            <div class="upload-zone" id="upload-zone">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <p>Click to select or drop image here</p>
+                <input type="file" name="image" accept="image/*" required id="file-input">
+                <button type="button" class="upload-button" id="upload-button"><i class="fas fa-upload"></i> Upload Image</button>
+            </div>
+            <div id="selected-file" class="status info hidden">
+                <i class="fas fa-file-image"></i>
+                <span>No file selected</span>
+            </div>
+            <div id="upload-progress" class="upload-progress">
+                <div id="upload-progress-bar" class="upload-progress-bar"></div>
+            </div>
+            <div id="upload-status" class="status success hidden">
+                <i class="fas fa-check-circle"></i>
+                <span>Upload successful!</span>
+            </div>
+            <div id="upload-error" class="status error hidden">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Upload failed</span>
+            </div>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2><i class="fas fa-share-alt"></i> Share This Server</h2>
+        <p>Send this link to others on your network to access this server:</p>
+        <div class="share-container">
+            <input type="text" id="server-url" class="share-input" value="http://localhost:3000" readonly>
+            <button id="copy-button" class="copy-button"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+        <div id="copy-status" class="status success hidden">
+            <i class="fas fa-check-circle"></i> Link copied to clipboard!
+        </div>
+    </section>
+
+    <section class="card">
+        <h2><i class="fas fa-images"></i> Uploaded Images</h2>
+        
+        <div class="gallery-controls">
+            <div>
+                <div id="loading-status" class="status info">
+                    <i class="fas fa-spinner fa-spin"></i> Loading images...
+                </div>
+                <div id="error-message" class="status error hidden">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Error loading images</span>
+                </div>
+            </div>
+            <button id="refresh-button" class="refresh-button">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        
+        <div id="gallery" class="gallery"></div>
+    </section>
+
+    <div id="toast" class="toast">Link copied to clipboard!</div>
+
+    <script>
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const uploadForm = document.getElementById('upload-form');
+        const uploadButton = document.getElementById('upload-button');
+        const uploadZone = document.getElementById('upload-zone');
+        const selectedFile = document.getElementById('selected-file');
+        const uploadProgress = document.getElementById('upload-progress');
+        const uploadProgressBar = document.getElementById('upload-progress-bar');
+        const uploadStatus = document.getElementById('upload-status');
+        const uploadError = document.getElementById('upload-error');
+        const serverUrlInput = document.getElementById('server-url');
+        const copyButton = document.getElementById('copy-button');
+        const copyStatus = document.getElementById('copy-status');
+        const loadingStatus = document.getElementById('loading-status');
+        const errorMessage = document.getElementById('error-message');
+        const gallery = document.getElementById('gallery');
+        const refreshButton = document.getElementById('refresh-button');
+        const toast = document.getElementById('toast');
+
+        // Initialize
+        window.onload = function() {
+            loadImages();
+            setupDragAndDrop();
+            setupUploadButton();
+        };
+
+        // Set up upload button
+        function setupUploadButton() {
+            uploadButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    showUploadError('Please select a file first');
+                    return;
+                }
+                
+                uploadFile(fileInput.files[0]);
+            });
+        }
+
+        // Upload file using API
+        function uploadFile(file) {
+            // Create form data
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            // Reset status
+            uploadStatus.classList.add('hidden');
+            uploadError.classList.add('hidden');
+            
+            // Show progress bar
+            uploadProgress.style.display = 'block';
+            uploadProgressBar.style.width = '0%';
+            
+            // Create AJAX request
+            const xhr = new XMLHttpRequest();
+            
+            // Set up progress tracking
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    uploadProgressBar.style.width = percentComplete + '%';
+                }
+            });
+            
+            // Set up completion handler
+            xhr.addEventListener('load', function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    // Success
+                    const response = JSON.parse(xhr.responseText);
+                    showUploadSuccess('Upload successful!');
+                    
+                    // Refresh gallery
+                    loadImages();
+                    
+                    // Reset file input
+                    fileInput.value = '';
+                    selectedFile.classList.add('hidden');
+                } else {
+                    // Error
+                    let errorMessage = 'Upload failed';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.error) {
+                            errorMessage = response.error;
+                        }
+                    } catch (e) {
+                        // If parsing fails, use the status text
+                        errorMessage = xhr.statusText || 'Unknown error';
+                    }
+                    
+                    showUploadError(errorMessage);
+                }
+                
+                // Hide progress bar after a delay
+                setTimeout(function() {
+                    uploadProgress.style.display = 'none';
+                }, 1000);
+            });
+            
+            // Set up error handler
+            xhr.addEventListener('error', function() {
+                showUploadError('Network error, please try again');
+                uploadProgress.style.display = 'none';
+            });
+            
+            // Open and send request
+            xhr.open('POST', '/api/upload', true);
+            xhr.send(formData);
+        }
+
+        // Show upload success message
+        function showUploadSuccess(message) {
+            uploadStatus.querySelector('span').textContent = message;
+            uploadStatus.classList.remove('hidden');
+            uploadError.classList.add('hidden');
+            
+            // Hide after 5 seconds
+            setTimeout(function() {
+                uploadStatus.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Show upload error message
+        function showUploadError(message) {
+            uploadError.querySelector('span').textContent = message;
+            uploadError.classList.remove('hidden');
+            uploadStatus.classList.add('hidden');
+        }
+
+        // Set up drag and drop
+        function setupDragAndDrop() {
+            uploadZone.addEventListener('click', () => fileInput.click());
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = 'var(--primary-dark)';
+                uploadZone.style.backgroundColor = 'rgba(52, 152, 219, 0.2)';
+            });
+            
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = '';
+                uploadZone.style.backgroundColor = '';
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = '';
+                uploadZone.style.backgroundColor = '';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    updateSelectedFile();
+                }
+            });
+            
+            fileInput.addEventListener('change', updateSelectedFile);
+        }
+
+        // Update selected file display
+        function updateSelectedFile() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                selectedFile.querySelector('span').textContent = `Selected file: ${file.name} (${formatFileSize(file.size)})`;
+                selectedFile.classList.remove('hidden');
+            } else {
+                selectedFile.classList.add('hidden');
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // Load images
+        function loadImages() {
+            loadingStatus.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            
+            fetch('/api/images')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update server URL
+                    if (data.serverUrl) {
+                        serverUrlInput.value = data.serverUrl;
+                    }
+                    
+                    // Display images
+                    if (!data.images || data.images.length === 0) {
+                        gallery.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-image"></i>
+                                <p>No images uploaded yet</p>
+                                <p>Upload an image to get started</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '';
+                        data.images.forEach(image => {
+                            html += `
+                                <div class="image-card">
+                                    <div class="image-container">
+                                        <img src="${image.url}" alt="${image.name}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%23f0f0f0\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' font-family=\\'Arial\\' font-size=\\'10\\' text-anchor=\\'middle\\' alignment-baseline=\\'middle\\' fill=\\'%23999\\'%3EImage Error%3C/text%3E%3C/svg%3E';">
+                                    </div>
+                                    <div class="image-info">
+                                        <div class="image-name" title="${image.name}">${image.name}</div>
+                                        <div class="image-expiry">
+                                            <i class="fas fa-clock"></i> Expires in ${image.timeLeft} minutes
+                                        </div>
+                                        
+                                        <!-- QR Code Section -->
+                                        <div class="qr-code-container">
+                                            <img src="${image.qrUrl}" alt="QR Code for ${image.name}">
+                                        </div>
+                                        <p class="qr-instructions">Scan to view this image directly</p>
+                                        
+                                        <div class="image-actions">
+                                            <a href="${image.downloadUrl || image.url}" download="${image.name}" class="download-button">
+                                                <i class="fas fa-download"></i> Download
+                                            </a>
+                                            <button class="copy-link-button" onclick="copyImageLink('${serverUrlInput.value}${image.url}')">
+                                                <i class="fas fa-link"></i> Copy Link
+                                            </button>
+                                            <a href="${image.viewUrl}" target="_blank" class="view-button">
+                                                <i class="fas fa-external-link-alt"></i> View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        gallery.innerHTML = html;
+                    }
+                    
+                    loadingStatus.classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error loading images:', error);
+                    errorMessage.querySelector('span').textContent = `Error: ${error.message}`;
+                    errorMessage.classList.remove('hidden');
+                    loadingStatus.classList.add('hidden');
+                    
+                    gallery.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Failed to load images</p>
+                            <p>Please try refreshing again</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Copy server URL
+        copyButton.addEventListener('click', function() {
+            serverUrlInput.select();
+            document.execCommand('copy');
+            
+            copyStatus.classList.remove('hidden');
+            setTimeout(() => {
+                copyStatus.classList.add('hidden');
+            }, 3000);
+        });
+
+        // Copy image link
+        function copyImageLink(link) {
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = link;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Refresh images
+        refreshButton.addEventListener('click', loadImages);
+    </script>
+</body>
+</html>
